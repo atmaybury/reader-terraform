@@ -1,5 +1,6 @@
 # Postgres instance
 resource "google_sql_database_instance" "postgres" {
+  project             = var.project_id
   name                = "postgres"
   database_version    = "POSTGRES_15"
   region              = var.region
@@ -15,6 +16,7 @@ resource "google_sql_database_instance" "postgres" {
 
 # Main postgres database
 resource "google_sql_database" "reader_postgres" {
+  project  = var.project_id
   name     = "reader-postgres"
   instance = google_sql_database_instance.postgres.name
 }
@@ -34,6 +36,7 @@ output "postgres_password" {
 
 # User for access to the db
 resource "google_sql_user" "reader_postgres_user" {
+  project     = var.project_id
   name        = "user"
   password_wo = random_password.postgres_password.result
   instance    = google_sql_database_instance.postgres.name
@@ -41,9 +44,9 @@ resource "google_sql_user" "reader_postgres_user" {
 
 # Create the service account
 resource "google_service_account" "postgres_proxy" {
+  project      = var.project_id
   account_id   = "reader-postgres-proxy"
   display_name = "Reader PostgreSQL Proxy Access"
-  project      = var.project_id
 }
 
 # Grant SQL admin to postgres_proxy service account
