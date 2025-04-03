@@ -55,6 +55,16 @@ resource "kubernetes_deployment" "reader_api" {
               }
             }
           }
+
+          env {
+            name = "JWT_SECRET"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret.jwt_secret.metadata[0].name
+                key  = "jwt-secret"
+              }
+            }
+          }
         }
       }
     }
@@ -93,4 +103,29 @@ resource "kubernetes_secret" "postgres_credentials" {
   }
 
   type = "Opaque"
+}
+
+resource "random_password" "jwt_secret" {
+  length           = 32
+  special          = true
+  override_special = "!@#$%^&*()-_=+[]{}:;<>,.?"
+}
+
+resource "kubernetes_secret" "jwt_secret" {
+  metadata {
+    name      = "jwt-secret"
+    namespace = kubernetes_namespace.reader.metadata[0].name
+  }
+
+  data = {
+    "jwt-secret" = random_password.jwt_secret.result
+  }
+
+  type = "Opaque"
+}
+
+# Output the password securely
+output "jwt_secret" {
+  value     = random_password.jwt_secret.result
+  sensitive = true
 }
